@@ -33,24 +33,24 @@ class MicrosoftGraphUserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Doe', $usr->getLastName());
         $this->assertEquals('john23314@contoso.com', $usr->getPrincipalName());
     }
-    
+
     public function testToArray()
     {
         $usr = new MicrosoftGraphUser($this->mockResponse);
 
         $this->assertEquals($this->mockResponse, $usr->toArray());
     }
-    
+
     public function testGetProperty()
     {
         $usr = new MicrosoftGraphUser($this->mockResponse);
 
         $this->assertEquals('aabbccddee99', $usr->getProperty('id'));
         $this->assertEquals('aabbccddee99', $usr->getProperty('id', 'fallback'));
-        
+
         $this->assertNull($usr->getProperty('missing'));
         $this->assertEquals('fallback', $usr->getProperty('missing', 'fallback'));
-        
+
         // Test array return
         $expectProxyAddresses = [
             'smtp:john23314@contoso.com',

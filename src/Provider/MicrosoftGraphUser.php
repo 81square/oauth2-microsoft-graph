@@ -57,7 +57,7 @@ class MicrosoftGraphUser implements ResourceOwnerInterface
     {
         return $this->getProperty('displayName');
     }
-    
+
     /**
      * Returns email address (may be same as UserPrincipalName)
      * 

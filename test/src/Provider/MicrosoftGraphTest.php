@@ -31,7 +31,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $uri = parse_url($url);
 
         $this->assertEquals('/common/oauth2/authorize', $uri['path']);
-        
+
         $query = array();
         parse_str($uri['query'], $query);
         $this->assertArrayHasKey('client_id', $query);
@@ -54,48 +54,48 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
     {
         // Check default
         $this->assertEquals('https://graph.microsoft.com', $this->provider->getApiUrlBase());
-        
+
         // Change without trailing
         $this->provider->setApiUrlBase('https://graph.windows.net');
         $this->assertEquals('https://graph.windows.net', $this->provider->getApiUrlBase());
-        
+
         // Change with trailing
         $this->provider->setApiUrlBase('https://graph.windows.org/');
         $this->assertEquals('https://graph.windows.org', $this->provider->getApiUrlBase());
     }
-    
+
     public function testGetSetApiVersion()
     {
         // Check default
         $this->assertEquals('v1.0', $this->provider->getApiVersion());
-        
+
         // Change
         $this->provider->setApiVersion('beta');
         $this->assertEquals('beta', $this->provider->getApiVersion());
     }
-    
+
     public function testGetSetLoginUrlBase()
     {
         // Check default
         $this->assertEquals('https://login.microsoftonline.com/common/oauth2', $this->provider->getLoginUrlBase());
-        
+
         // Change without trailing
         $this->provider->setLoginUrlBase('https://login.microsoftonline.com/mytenant/oauth2');
         $this->assertEquals('https://login.microsoftonline.com/mytenant/oauth2', $this->provider->getLoginUrlBase());
-        
+
         // Change with trailing
         $this->provider->setLoginUrlBase('https://login.microsoftonline.com/foo/oauth2/');
         $this->assertEquals('https://login.microsoftonline.com/foo/oauth2', $this->provider->getLoginUrlBase());
     }
-    
+
     public function testResourceOwnerDetailsUrl()
     {
         $token = m::mock('League\OAuth2\Client\Token\AccessToken', [['access_token' => 'mock_access_token']]);
-       
+
         // Expect: https://graph.microsoft.com/v1.0/me
         $url = $this->provider->getResourceOwnerDetailsUrl($token);
         $uri = parse_url($url);
-       
+
         $this->assertEquals('/v1.0/me', $uri['path']);
         $this->assertNotContains('mock_access_token', $url);
     }
