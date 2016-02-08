@@ -17,7 +17,8 @@ class MicrosoftGraph extends AbstractProvider
     use BearerAuthorizationTrait;
 
     const ACCESS_TOKEN_RESOURCE_OWNER_ID = 'id';
-
+    const ACCESS_TOKEN_RESOURCE = 'https://graph.microsoft.com/';
+    
     /**
      * Base URL for Microsoft Graph API requests
      * 
@@ -158,21 +159,33 @@ class MicrosoftGraph extends AbstractProvider
     /**
      * @inheritdoc
      */
+    public function getAccessToken($grant = 'authorization_code', array $params = [])
+    {
+        if (!isset($params['resource'])) {
+            // Set to default Access Token Resource
+            $params['resource'] = self::ACCESS_TOKEN_RESOURCE;
+        }
+        
+        return parent::getAccessToken($grant, $params);
+    }
+
+    /**
+     * @inheritdoc
+     */
     protected function checkResponse(ResponseInterface $response, $data)
     {
-        if (!isset($data['odata.error'])) {
-            // No error
+        if (isset($data['odata.error'])) {
+            // OData error?
+            $this->handleODataError($response, $data);
             return;
         }
 
-        if (isset($data['odata.error']['message'])) {
-            $message = $data['odata.error']['message']['value'];
-        } else {
-            $message = $response->getReasonPhrase();
+        if (isset($data['error']) && !empty($data['error'])) {
+            $this->handleOAuth2Error($response, $data);
+            return;
         }
 
-        // Throw
-        throw new IdentityProviderException($message, $response->getStatusCode(), $response);
+        // No errors
     }
 
     /**
@@ -181,5 +194,52 @@ class MicrosoftGraph extends AbstractProvider
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         return new MicrosoftGraphUser($response);
+    }
+
+    /**
+     * Handle oauth2 error
+     * 
+     * @param ResponseInterface $response Response
+     * @param array $data Error response data
+     * @throws IdentityProviderException
+     */
+    protected function handleOAuth2Error(ResponseInterface $response, $data)
+    {
+        /*
+         * Example error:
+         *  array(
+         *      'error' => 'invalid_grant', 
+         *      'error_description' => 'AADSTS65001: The user or administrator has not consented to use the application with ID 'xxxxxxxxx77'. Send an interactive authorization request for this user and resource. ', 
+         *      'error_codes' => array('65001'), 
+         *      'timestamp' => '2016-02-08 17:12:11Z', 
+         *      'trace_id' => 'xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx', 
+         *      'correlation_id' => 'xxx...', 
+         *      'resource_owner_id' => null
+         * )
+         */
+
+        if (!empty($data['error'])) {
+            $message = $data['error'] . ': ' . $data['error_description'];
+            throw new IdentityProviderException($message, $data['error_codes'][0], $data);
+        }
+    }
+
+    /**
+     * Handle OData error
+     * 
+     * @param ResponseInterface $response Response
+     * @param array $data Error response data
+     * @throws IdentityProviderException
+     */
+    protected function handleODataError(ResponseInterface $response, $data)
+    {
+        if (isset($data['odata.error']['message'])) {
+            $message = $data['odata.error']['message']['value'];
+        } else {
+            $message = $response->getReasonPhrase();
+        }
+
+        // Throw
+        throw new IdentityProviderException($message, $response->getStatusCode(), $response);
     }
 }
