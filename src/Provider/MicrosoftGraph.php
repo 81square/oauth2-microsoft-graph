@@ -39,7 +39,30 @@ class MicrosoftGraph extends AbstractProvider
      * @var string URL
      * @link http://graph.microsoft.io/en-us/docs/authorization/app_authorization Graph Authorization
      */
-    protected $loginUrlBase = 'https://login.microsoftonline.com/common/oauth2';
+    protected $loginUrlBase = 'https://login.microsoftonline.com';
+
+    /**
+     * Tentant ID (used in login URL)
+     * 
+     * @var string Tenant ID 
+     */
+    protected $tenant = 'common';
+    
+    /**
+     * OAuth2 path (used in login url)
+     * 
+     * You may want to set this to /oauth2/v2 when using the v2.0 app model
+     * 
+     * @var string path
+     */
+    protected $pathOAuth2 = '/oauth2';
+
+    /**
+     * Default scopes (not really used in current version of Microsoft Graph)
+     * 
+     * @var array Scopes 
+     */
+    protected $scopes = [];
 
     /**
      * Gets base URL
@@ -93,41 +116,32 @@ class MicrosoftGraph extends AbstractProvider
     }
 
     /**
-     * Gets base URL for login (OAuth2 endpoint)
+     * Gets tenant (default: common)
      * 
-     * @return string Base URL for login
+     * @return string tenant ID
      */
-    public function getLoginUrlBase()
+    public function getTenant()
     {
-        return $this->loginUrlBase;
+        return $this->tenant;
     }
-
+    
     /**
-     * Sets base URL for login (OAuth2 endpoint)
+     * Sets tenant (default: common)
      * 
-     * You may want to change this if you want to authenticate against another
-     * tenant. Examples:
-     * - https://login.microsoftonline.com/common/oauth2 (default)
-     * - https://login.microsoftonline.com/mycompany/oauth2 (your tentantid)
-     * - https://login.microsoftonline.com/common/oauth2/v2.0 (v2.0 model preview)
-     * 
-     * @param string $loginUrlBase Base URL
-     * @return self
+     * @param string tenant ID
      */
-    public function setLoginUrlBase($loginUrlBase)
+    public function setTenant($tenant)
     {
-        // Remove trailing slash
-        $this->loginUrlBase = rtrim($loginUrlBase, '/');
-        return $this;
+        $this->tenant = $tenant;
     }
-
+    
     /**
      * @inheritdoc
      */
     public function getBaseAuthorizationUrl()
     {
         // examples: https://login.microsoftonline.com/common/oauth2/authorize
-        return $this->loginUrlBase . '/authorize';
+        return $this->loginUrlBase . '/'. $this->tenant . $this->pathOAuth2 . '/authorize';
     }
 
     /**
@@ -136,7 +150,7 @@ class MicrosoftGraph extends AbstractProvider
     public function getBaseAccessTokenUrl(array $params)
     {
         // example: https://login.microsoftonline.com/common/oauth2/token
-        return $this->loginUrlBase . '/token';
+        return $this->loginUrlBase .'/'. $this->tenant . $this->pathOAuth2 . '/token';
     }
 
     /**
@@ -153,7 +167,7 @@ class MicrosoftGraph extends AbstractProvider
      */
     protected function getDefaultScopes()
     {
-        return [];
+        return $this->scopes;
     }
 
     /**
@@ -180,11 +194,17 @@ class MicrosoftGraph extends AbstractProvider
             return;
         }
 
-        if (isset($data['error']) && !empty($data['error'])) {
+        if (isset($data['error'])) {
+            if (is_array($data['error'])) {
+                $this->handleApiError($response, $data);
+                return;
+            }
+            
+            // Probably OAuth2 error
             $this->handleOAuth2Error($response, $data);
             return;
         }
-
+        
         // No errors
     }
 
@@ -206,7 +226,7 @@ class MicrosoftGraph extends AbstractProvider
     protected function handleOAuth2Error(ResponseInterface $response, $data)
     {
         /*
-         * Example error:
+         * Example error in OAuth2 authorization process:
          *  array(
          *      'error' => 'invalid_grant', 
          *      'error_description' => 'AADSTS65001: The user or administrator has not consented to use the application with ID 'xxxxxxxxx77'. Send an interactive authorization request for this user and resource. ', 
@@ -241,5 +261,52 @@ class MicrosoftGraph extends AbstractProvider
 
         // Throw
         throw new IdentityProviderException($message, $response->getStatusCode(), $response);
+    }
+    
+    /**
+     * Handle API error
+     * 
+     * @param ResponseInterface $response  Response
+     * @param array $data Error response data
+     * @throws IdentityProviderException
+     */
+    protected function handleApiError(ResponseInterface $response, $data)
+    {
+        /*
+         * Example of API error:
+         * 
+         * {
+         *   "error": {
+         *     "code": "ErrorNonExistentMailbox",
+         *     "message": "The SMTP address has no mailbox associated with it."
+         *   }
+         * }
+         * 
+         */
+     
+        if (is_array($data['error']) && isset($data['error']['code'])) {
+            $message = $data['error']['code'] . ': ' . $data['error']['message'];
+            throw new IdentityProviderException($message, $response->getStatusCode(), $data);
+        }
+    }
+    
+    public function getMemberOf($token, array $options = [])
+    {
+        $response = $this->sendGet('/me/memberOf/$/microsoft.graph.group', $token, $options);
+        return $response;
+    }
+    
+    public function sendGet($endpoint, $token, array $options = [])
+    {
+        // Build URL
+        // example: https://graph.microsoft.com/v1.0/me/messages
+        $url = $endpoint;
+        if (strpos($endpoint, '/') === 0) {
+            $url = $this->apiUrlBase . '/' . $this->apiVersion . $endpoint;
+        }
+        
+        $request = $this->getAuthenticatedRequest('GET', $url, $token, $options);
+        $response = $this->getResponse($request);
+        return $response;
     }
 }

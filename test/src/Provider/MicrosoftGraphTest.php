@@ -50,20 +50,6 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/common/oauth2/token', $uri['path']);
     }
 
-    public function testGetSetApiUrlBase()
-    {
-        // Check default
-        $this->assertEquals('https://graph.microsoft.com', $this->provider->getApiUrlBase());
-
-        // Change without trailing
-        $this->provider->setApiUrlBase('https://graph.windows.net');
-        $this->assertEquals('https://graph.windows.net', $this->provider->getApiUrlBase());
-
-        // Change with trailing
-        $this->provider->setApiUrlBase('https://graph.windows.org/');
-        $this->assertEquals('https://graph.windows.org', $this->provider->getApiUrlBase());
-    }
-
     public function testGetSetApiVersion()
     {
         // Check default
@@ -74,18 +60,37 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('beta', $this->provider->getApiVersion());
     }
 
-    public function testGetSetLoginUrlBase()
+    public function testGetBaseAuthorizationUrl()
     {
         // Check default
-        $this->assertEquals('https://login.microsoftonline.com/common/oauth2', $this->provider->getLoginUrlBase());
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/authorize', $this->provider->getBaseAuthorizationUrl());
 
-        // Change without trailing
-        $this->provider->setLoginUrlBase('https://login.microsoftonline.com/mytenant/oauth2');
-        $this->assertEquals('https://login.microsoftonline.com/mytenant/oauth2', $this->provider->getLoginUrlBase());
+        // Change tenant
+        $this->provider->setTenant('contoso.onmicrosoft.com');
+        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/authorize', $this->provider->getBaseAuthorizationUrl());
+    }
+    
+    public function testGetBaseAccessTokenUrl()
+    {
+        // Check default
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/token', $this->provider->getBaseAccessTokenUrl());
 
-        // Change with trailing
-        $this->provider->setLoginUrlBase('https://login.microsoftonline.com/foo/oauth2/');
-        $this->assertEquals('https://login.microsoftonline.com/foo/oauth2', $this->provider->getLoginUrlBase());
+        // Change tenant
+        $this->provider->setTenant('contoso.onmicrosoft.com');
+        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/token', $this->provider->getBaseAccessTokenUrl());
+    }
+
+    public function testConstruct_OAuth2Path() {
+        // Change with different oauth2 path (constructor)
+        $provider = new MicrosoftGraphProvider([
+            'clientId' => 'mock_client_id',
+            'clientSecret' => 'mock_secret',
+            'redirectUri' => 'none',
+            'pathOAuth2' => '/oauth2/v2.0',
+        ]);
+        
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', $provider->getBaseAuthorizationUrl());
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/token', $provider->getBaseAccessTokenUrl());
     }
 
     public function testResourceOwnerDetailsUrl()
@@ -94,9 +99,19 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
 
         // Expect: https://graph.microsoft.com/v1.0/me
         $url = $this->provider->getResourceOwnerDetailsUrl($token);
-        $uri = parse_url($url);
+        $urlParsed = parse_url($url);
 
-        $this->assertEquals('/v1.0/me', $uri['path']);
+        $this->assertEquals('/v1.0/me', $urlParsed['path']);
         $this->assertNotContains('mock_access_token', $url);
+        
+        // Change api version
+        $this->provider->setApiVersion('beta');
+        
+        // Expect: https://graph.microsoft.com/beta/me
+        $urlBeta = $this->provider->getResourceOwnerDetailsUrl($token);
+        $urlBetaParsed = parse_url($urlBeta);
+
+        $this->assertEquals('/beta/me', $urlBetaParsed['path']);
+        $this->assertNotContains('mock_access_token', $urlBeta);
     }
 }
