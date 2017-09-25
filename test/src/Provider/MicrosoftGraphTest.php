@@ -8,6 +8,9 @@ use Mockery as m;
 class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
 {
 
+	/**
+	 * @var MicrosoftGraphProvider
+	 */
     protected $provider;
 
     protected function setUp()
@@ -73,11 +76,11 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
     public function testGetBaseAccessTokenUrl()
     {
         // Check default
-        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/token', $this->provider->getBaseAccessTokenUrl());
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/token', $this->provider->getBaseAccessTokenUrl([]));
 
         // Change tenant
         $this->provider->setTenant('contoso.onmicrosoft.com');
-        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/token', $this->provider->getBaseAccessTokenUrl());
+        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/token', $this->provider->getBaseAccessTokenUrl([]));
     }
 
     public function testConstruct_OAuth2Path() {
@@ -90,7 +93,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         ]);
         
         $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', $provider->getBaseAuthorizationUrl());
-        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/token', $provider->getBaseAccessTokenUrl());
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/token', $provider->getBaseAccessTokenUrl([]));
     }
 
     public function testResourceOwnerDetailsUrl()

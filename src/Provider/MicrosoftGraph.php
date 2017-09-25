@@ -128,7 +128,7 @@ class MicrosoftGraph extends AbstractProvider
     /**
      * Sets tenant (default: common)
      * 
-     * @param string tenant ID
+     * @param string $tenant ID
      */
     public function setTenant($tenant)
     {
