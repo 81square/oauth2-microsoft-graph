@@ -1,5 +1,5 @@
 {
-    "name": "81square/oauth2-microsoft-graph",
+    "name": "kronostechnologies/oauth2-microsoft-graph",
     "description": "Microsoft Graph OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
     "license": "MIT",
     "authors": [
