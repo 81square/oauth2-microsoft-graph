@@ -33,7 +33,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $url = $this->provider->getAuthorizationUrl();
         $uri = parse_url($url);
 
-        $this->assertEquals('/common/oauth2/authorize', $uri['path']);
+        $this->assertEquals('/common/oauth2/v2.0/authorize', $uri['path']);
 
         $query = array();
         parse_str($uri['query'], $query);
@@ -50,7 +50,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
     {
         $url = $this->provider->getBaseAccessTokenUrl([]);
         $uri = parse_url($url);
-        $this->assertEquals('/common/oauth2/token', $uri['path']);
+        $this->assertEquals('/common/oauth2/v2.0/token', $uri['path']);
     }
 
     public function testGetSetApiVersion()
@@ -66,21 +66,21 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
     public function testGetBaseAuthorizationUrl()
     {
         // Check default
-        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/authorize', $this->provider->getBaseAuthorizationUrl());
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', $this->provider->getBaseAuthorizationUrl());
 
         // Change tenant
         $this->provider->setTenant('contoso.onmicrosoft.com');
-        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/authorize', $this->provider->getBaseAuthorizationUrl());
+        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/authorize', $this->provider->getBaseAuthorizationUrl());
     }
     
     public function testGetBaseAccessTokenUrl()
     {
         // Check default
-        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/token', $this->provider->getBaseAccessTokenUrl([]));
+        $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/token', $this->provider->getBaseAccessTokenUrl([]));
 
         // Change tenant
         $this->provider->setTenant('contoso.onmicrosoft.com');
-        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/token', $this->provider->getBaseAccessTokenUrl([]));
+        $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/token', $this->provider->getBaseAccessTokenUrl([]));
     }
 
     public function testConstruct_OAuth2Path() {

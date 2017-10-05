@@ -18,7 +18,8 @@ class MicrosoftGraph extends AbstractProvider
 
     const ACCESS_TOKEN_RESOURCE_OWNER_ID = 'id';
     const ACCESS_TOKEN_RESOURCE = 'https://graph.microsoft.com/';
-    
+    const DEFAULT_SCOPES = ['openid', 'profile', 'offline_access'];
+
     /**
      * Base URL for Microsoft Graph API requests
      * 
@@ -55,14 +56,7 @@ class MicrosoftGraph extends AbstractProvider
      * 
      * @var string path
      */
-    protected $pathOAuth2 = '/oauth2';
-
-    /**
-     * Default scopes (not really used in current version of Microsoft Graph)
-     * 
-     * @var array Scopes 
-     */
-    protected $scopes = [];
+    protected $pathOAuth2 = '/oauth2/v2.0';
 
     /**
      * Gets base URL
@@ -162,24 +156,27 @@ class MicrosoftGraph extends AbstractProvider
         return $this->apiUrlBase . '/' . $this->apiVersion . '/me';
     }
 
+
     /**
      * @inheritdoc
      */
     protected function getDefaultScopes()
     {
-        return $this->scopes;
+	    return self::DEFAULT_SCOPES;
     }
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function getScopeSeparator(){
+		return ' ';
+	}
 
     /**
      * @inheritdoc
      */
     public function getAccessToken($grant = 'authorization_code', array $params = [])
     {
-        if (!isset($params['resource'])) {
-            // Set to default Access Token Resource
-            $params['resource'] = self::ACCESS_TOKEN_RESOURCE;
-        }
-        
         return parent::getAccessToken($grant, $params);
     }
 
