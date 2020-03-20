@@ -4,8 +4,9 @@ namespace EightyOneSquare\OAuth2\Client\Test\Provider;
 
 use EightyOneSquare\OAuth2\Client\Provider\MicrosoftGraph as MicrosoftGraphProvider;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
-class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
+class MicrosoftGraphTest extends TestCase
 {
 
 	/**
@@ -13,7 +14,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
 	 */
     protected $provider;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->provider = new MicrosoftGraphProvider([
             'clientId' => 'mock_client_id',
@@ -22,7 +23,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         ]);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
         parent::tearDown();
@@ -72,7 +73,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $this->provider->setTenant('contoso.onmicrosoft.com');
         $this->assertEquals('https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/authorize', $this->provider->getBaseAuthorizationUrl());
     }
-    
+
     public function testGetBaseAccessTokenUrl()
     {
         // Check default
@@ -91,7 +92,7 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
             'redirectUri' => 'none',
             'pathOAuth2' => '/oauth2/v2.0',
         ]);
-        
+
         $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', $provider->getBaseAuthorizationUrl());
         $this->assertEquals('https://login.microsoftonline.com/common/oauth2/v2.0/token', $provider->getBaseAccessTokenUrl([]));
     }
@@ -105,16 +106,16 @@ class MicrosoftGraphTest extends \PHPUnit_Framework_TestCase
         $urlParsed = parse_url($url);
 
         $this->assertEquals('/v1.0/me', $urlParsed['path']);
-        $this->assertNotContains('mock_access_token', $url);
-        
+        $this->assertStringNotContainsString('mock_access_token', $url);
+
         // Change api version
         $this->provider->setApiVersion('beta');
-        
+
         // Expect: https://graph.microsoft.com/beta/me
         $urlBeta = $this->provider->getResourceOwnerDetailsUrl($token);
         $urlBetaParsed = parse_url($urlBeta);
 
         $this->assertEquals('/beta/me', $urlBetaParsed['path']);
-        $this->assertNotContains('mock_access_token', $urlBeta);
+        $this->assertStringNotContainsString('mock_access_token', $urlBeta);
     }
 }

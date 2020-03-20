@@ -4,34 +4,23 @@ This package provides [Microsoft Graph](http://http://graph.microsoft.io) OAuth 
 
 **!!WORK IN PROGRESS!!**
 
-## Requirements
-
-TODO
 
 ## Installation
 
 To install, use composer:
 
 ```
-composer require 81square/oauth2-microsoft-graph
+composer require kronos/oauth2-microsoft-graph
 ```
 
 
 ## Usage
-
-### Authorization Code Flow
-
-TODO
 
 ## Testing
 
 ``` bash
 $ ./vendor/bin/phpunit
 ```
-
-## Contributing
-
-TODO
 
 
 ## Credits

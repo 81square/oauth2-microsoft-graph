@@ -3,8 +3,9 @@
 namespace EightyOneSquare\OAuth2\Client\Test\Provider;
 
 use EightyOneSquare\OAuth2\Client\Provider\MicrosoftGraphUser;
+use PHPUnit\Framework\TestCase;
 
-class MicrosoftGraphUserTest extends \PHPUnit_Framework_TestCase
+class MicrosoftGraphUserTest extends TestCase
 {
 
     private $mockResponse = array(
