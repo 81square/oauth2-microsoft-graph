@@ -22,21 +22,21 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Base URL for Microsoft Graph API requests
-     * 
+     *
      * @var string URL
      */
     protected $apiUrlBase = 'https://graph.microsoft.com';
 
     /**
      * API Version string. Used for building api url.
-     * 
+     *
      * @var string API version like 'v1.0' or 'beta'.
      */
     protected $apiVersion = 'v1.0';
 
     /**
      * Base URL for Authorization (OAuth2 endpoint)
-     * 
+     *
      * @var string URL
      * @link http://graph.microsoft.io/en-us/docs/authorization/app_authorization Graph Authorization
      */
@@ -44,23 +44,23 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Tentant ID (used in login URL)
-     * 
-     * @var string Tenant ID 
+     *
+     * @var string Tenant ID
      */
     protected $tenant = 'common';
-    
+
     /**
      * OAuth2 path (used in login url)
-     * 
+     *
      * You may want to set this to /oauth2/v2 when using the v2.0 app model
-     * 
+     *
      * @var string path
      */
     protected $pathOAuth2 = '/oauth2/v2.0';
 
     /**
      * Gets base URL
-     * 
+     *
      * @return string Base URL
      */
     public function getApiUrlBase()
@@ -70,7 +70,7 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Sets API version string.
-     * 
+     *
      * @param string $apiUrlBase Base URL
      * @return self
      */
@@ -83,7 +83,7 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Gets API version string.
-     * 
+     *
      * @return string API version like 'v1.0' or 'beta'.
      */
     public function getApiVersion()
@@ -93,7 +93,7 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Sets API version string.
-     * 
+     *
      * @param string $apiVersion API version like 'v1.0' or 'beta'.
      * @return self
      * @throws \InvalidArgumentException On non-string value
@@ -111,24 +111,24 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Gets tenant (default: common)
-     * 
+     *
      * @return string tenant ID
      */
     public function getTenant()
     {
         return $this->tenant;
     }
-    
+
     /**
      * Sets tenant (default: common)
-     * 
+     *
      * @param string $tenant ID
      */
     public function setTenant($tenant)
     {
         $this->tenant = $tenant;
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -175,9 +175,9 @@ class MicrosoftGraph extends AbstractProvider
     /**
      * @inheritdoc
      */
-    public function getAccessToken($grant = 'authorization_code', array $params = [])
+    public function getAccessToken($grant = 'authorization_code', array $options = [])
     {
-        return parent::getAccessToken($grant, $params);
+        return parent::getAccessToken($grant, $options);
     }
 
     /**
@@ -196,12 +196,12 @@ class MicrosoftGraph extends AbstractProvider
                 $this->handleApiError($response, $data);
                 return;
             }
-            
+
             // Probably OAuth2 error
             $this->handleOAuth2Error($response, $data);
             return;
         }
-        
+
         // No errors
     }
 
@@ -215,7 +215,7 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Handle oauth2 error
-     * 
+     *
      * @param ResponseInterface $response Response
      * @param array $data Error response data
      * @throws IdentityProviderException
@@ -225,12 +225,12 @@ class MicrosoftGraph extends AbstractProvider
         /*
          * Example error in OAuth2 authorization process:
          *  array(
-         *      'error' => 'invalid_grant', 
-         *      'error_description' => 'AADSTS65001: The user or administrator has not consented to use the application with ID 'xxxxxxxxx77'. Send an interactive authorization request for this user and resource. ', 
-         *      'error_codes' => array('65001'), 
-         *      'timestamp' => '2016-02-08 17:12:11Z', 
-         *      'trace_id' => 'xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx', 
-         *      'correlation_id' => 'xxx...', 
+         *      'error' => 'invalid_grant',
+         *      'error_description' => 'AADSTS65001: The user or administrator has not consented to use the application with ID 'xxxxxxxxx77'. Send an interactive authorization request for this user and resource. ',
+         *      'error_codes' => array('65001'),
+         *      'timestamp' => '2016-02-08 17:12:11Z',
+         *      'trace_id' => 'xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx',
+         *      'correlation_id' => 'xxx...',
          *      'resource_owner_id' => null
          * )
          */
@@ -243,7 +243,7 @@ class MicrosoftGraph extends AbstractProvider
 
     /**
      * Handle OData error
-     * 
+     *
      * @param ResponseInterface $response Response
      * @param array $data Error response data
      * @throws IdentityProviderException
@@ -256,13 +256,17 @@ class MicrosoftGraph extends AbstractProvider
             $message = $response->getReasonPhrase();
         }
 
-        // Throw
-        throw new IdentityProviderException($message, $response->getStatusCode(), $response);
+        $responseArray = [
+            'headers' => $response->getHeaders(),
+            'body' => (string)$response->getBody()
+        ];
+
+        throw new IdentityProviderException($message, $response->getStatusCode(), $responseArray);
     }
-    
+
     /**
      * Handle API error
-     * 
+     *
      * @param ResponseInterface $response  Response
      * @param array $data Error response data
      * @throws IdentityProviderException
@@ -271,28 +275,28 @@ class MicrosoftGraph extends AbstractProvider
     {
         /*
          * Example of API error:
-         * 
+         *
          * {
          *   "error": {
          *     "code": "ErrorNonExistentMailbox",
          *     "message": "The SMTP address has no mailbox associated with it."
          *   }
          * }
-         * 
+         *
          */
-     
+
         if (is_array($data['error']) && isset($data['error']['code'])) {
             $message = $data['error']['code'] . ': ' . $data['error']['message'];
             throw new IdentityProviderException($message, $response->getStatusCode(), $data);
         }
     }
-    
+
     public function getMemberOf($token, array $options = [])
     {
         $response = $this->sendGet('/me/memberOf/$/microsoft.graph.group', $token, $options);
         return $response;
     }
-    
+
     public function sendGet($endpoint, $token, array $options = [])
     {
         // Build URL
@@ -301,7 +305,7 @@ class MicrosoftGraph extends AbstractProvider
         if (strpos($endpoint, '/') === 0) {
             $url = $this->apiUrlBase . '/' . $this->apiVersion . $endpoint;
         }
-        
+
         $request = $this->getAuthenticatedRequest('GET', $url, $token, $options);
         $response = $this->getResponse($request);
         return $response;

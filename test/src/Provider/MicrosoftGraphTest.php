@@ -3,9 +3,11 @@
 namespace EightyOneSquare\OAuth2\Client\Test\Provider;
 
 use EightyOneSquare\OAuth2\Client\Provider\MicrosoftGraph as MicrosoftGraphProvider;
+use League\OAuth2\Client\Token\AccessToken;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
+/** @psalm-suppress PossiblyUndefinedArrayOffset */
 class MicrosoftGraphTest extends TestCase
 {
 
@@ -99,7 +101,8 @@ class MicrosoftGraphTest extends TestCase
 
     public function testResourceOwnerDetailsUrl()
     {
-        $token = m::mock('League\OAuth2\Client\Token\AccessToken', [['access_token' => 'mock_access_token']]);
+        /** @var m\MockInterface&AccessToken $token */
+        $token = m::mock(AccessToken::class, [['access_token' => 'mock_access_token']]);
 
         // Expect: https://graph.microsoft.com/v1.0/me
         $url = $this->provider->getResourceOwnerDetailsUrl($token);
